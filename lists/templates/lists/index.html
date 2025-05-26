@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Shopping Lists</title>
+</head>
+
+<body>
+    <h1>Your Shopping Lists</h1>
+    <ul>
+        {% for list in lists %}
+        <li>
+            <a href="{% url 'shoppinglist-detail' list.id %}">
+                {{ list.name }} ({{ list.author.username }})
+            </a>
+        </li>
+        {% empty %}
+        <li>No shopping lists yet.</li>
+        {% endfor %}
+    </ul>
+</body>
+
+</html>
