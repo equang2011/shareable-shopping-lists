@@ -18,8 +18,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from lists import views
+from django.shortcuts import redirect
 
 urlpatterns = [
+    path("", lambda request: redirect("login/", permanent=False)),
     path("admin/", admin.site.urls),
     path("lists/", include("lists.urls")),  # need to figure out what this line does
     path("signup/", views.signup_view, name="signup"),
