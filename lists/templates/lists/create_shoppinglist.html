@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Create New List</title>
+</head>
+
+<body>
+    <h1>Create a Shopping List</h1>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Create</button>
+    </form>
+
+    <p></p>
+    <a href="{% url 'shoppinglist-index' %}">Back to all shopping lists</a>
+</body>
+
+</html>

@@ -71,7 +71,7 @@ def create_list(request):
     else:
         form = CreateListForm()
 
-    return render(request, "lists/create_shopppinglist.html", {"form": form})
+    return render(request, "lists/create_shoppinglist.html", {"form": form})
 
 
 @login_required
