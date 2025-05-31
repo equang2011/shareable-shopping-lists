@@ -19,6 +19,7 @@ from django.contrib import admin
 from django.urls import include, path
 from lists import views
 from django.shortcuts import redirect
+from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path("", lambda request: redirect("login/", permanent=False)),
@@ -26,4 +27,5 @@ urlpatterns = [
     path("lists/", include("lists.urls")),  # need to figure out what this line does
     path("signup/", views.signup_view, name="signup"),
     path("login/", views.login_view, name="login"),
+    path("logout/", auth_views.LogoutView.as_view(next_page="/login/"), name="logout"),
 ]
