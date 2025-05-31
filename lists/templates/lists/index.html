@@ -23,6 +23,11 @@
     <div style="margin-top: 1em;">
         <a href="{% url 'create-list' %}">+ Create a new list</a>
     </div>
+
+    {% if user.is_authenticated %}
+    <p><a href="{% url 'logout' %}">Logout</a></p>
+    {% endif %}
+
 </body>
 
 </html>
