@@ -13,7 +13,7 @@
     <ul>
         {% for item in items %}
         <li> {{item.name}} ............ <strong>{{ item.get_status_display }}</strong>
-            <a href="{% url 'edit-item' item.id%}">Edit item</a>
+            <a href="{% url 'edit-item' item.id shoppinglist.id%}">Edit ✏️</a>
         </li>
 
         {% empty %}
