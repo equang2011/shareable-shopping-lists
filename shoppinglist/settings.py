@@ -25,7 +25,10 @@ SECRET_KEY = "django-insecure-ise7ca8ayc_qlvwt+-c4#rlahs9h4-34&$el%!vr!p@v#eyhln
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["shoppinglist-backend-vi1h.onrender.com"]
+ALLOWED_HOSTS = [
+    "shoppinglist-backend-vi1h.onrender.com",
+    "127.0.0.1",
+]
 
 
 # Application definition

@@ -1,11 +1,11 @@
 from django.contrib.auth import authenticate, login
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
-from .models import ShoppingList
+from .models import ShoppingList, Item
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
 
-from .forms import CreateListForm, AddItemForm
+from .forms import CreateListForm, AddItemForm, EditItemForm
 
 
 # Create your views here.
@@ -92,4 +92,25 @@ def add_item(request, list_id):
         request,
         "lists/add_item.html",
         {"form": form, "shoppinglist": shoppinglist, "items": items},
+    )
+
+
+@login_required
+def edit_item(request, item_id):
+
+    item = Item.objects.get(id=item_id)
+
+    if request.method == "POST":
+        form = EditItemForm(request.POST, instance=item)
+
+        if form.is_valid():
+            form.save()
+            return redirect("shoppinglist-detail", item.shopping_list.id)
+    else:
+        form = EditItemForm(instance=item)
+
+    return render(
+        request,
+        "lists/edit_item.html",
+        {"form": form, "item": item, "shoppinglist": item.shopping_list},
     )

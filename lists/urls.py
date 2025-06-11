@@ -7,4 +7,5 @@ urlpatterns = [
     path("<int:list_id>/", views.item_view, name="shoppinglist-detail"),
     path("new/", views.create_list, name="create-list"),  # what does this do
     path("<int:list_id>/add/", views.add_item, name="add-item"),
+    path("edit_item/<int:item_id>/", views.edit_item, name="edit-item"),
 ]
