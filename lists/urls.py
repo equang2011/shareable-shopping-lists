@@ -1,11 +1,15 @@
+# lists/urls.py
 from django.urls import path
-
 from . import views
 
+app_name = "lists"
+
 urlpatterns = [
-    path("", views.index, name="shoppinglist-index"),
-    path("<int:list_id>/", views.item_view, name="shoppinglist-detail"),
-    path("new/", views.create_list, name="create-list"),  # what does this do
-    path("<int:list_id>/add/", views.add_item, name="add-item"),
-    path("edit_item/<int:item_id>/", views.edit_item, name="edit-item"),
+    path("", views.index, name="shoppinglist-index"),  # /lists/
+    path("new/", views.create_list, name="create-list"),  # /lists/new/
+    path("<int:list_id>/", views.item_view, name="shoppinglist-detail"),  # /lists/42/
+    path("<int:list_id>/add/", views.add_item, name="add-item"),  # /lists/42/add/
+    path(
+        "items/<int:item_id>/edit/", views.edit_item, name="edit-item"
+    ),  # /lists/items/123/edit/
 ]

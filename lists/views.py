@@ -1,14 +1,15 @@
+from django.conf import settings
 from django.contrib.auth import authenticate, login
+from django.db.models import Q
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse
+
 from .models import ShoppingList, Item
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
-
+from .permissions import get_lists_user_can_view, user_can_access_list
 from .forms import CreateListForm, AddItemForm, EditItemForm
 
 
-# Create your views here.
 def login_view(request):
     if request.method == "POST":
         username = request.POST["username"]
@@ -43,17 +44,8 @@ def signup_view(request):
 
 @login_required
 def index(request):
-    lists = ShoppingList.objects.filter(author=request.user)
+    lists = get_lists_user_can_view(request.user)
     return render(request, "lists/index.html", {"lists": lists})
-
-
-@login_required
-def item_view(request, list_id):
-    shoppinglist = get_object_or_404(ShoppingList, id=list_id)
-    items = shoppinglist.items.all()
-    return render(
-        request, "lists/item_view.html", {"shoppinglist": shoppinglist, "items": items}
-    )
 
 
 @login_required
@@ -75,8 +67,19 @@ def create_list(request):
 
 
 @login_required
+def item_view(request, list_id):
+    shoppinglist = get_object_or_404(lists_user_can_view_qs(request.user), id=list_id)
+
+    items = shoppinglist.items.all()
+    return render(
+        request, "lists/item_view.html", {"shoppinglist": shoppinglist, "items": items}
+    )
+
+
+@login_required
 def add_item(request, list_id):
-    shoppinglist = get_object_or_404(ShoppingList, id=list_id)
+    shoppinglist = get_object_or_404(lists_user_can_view_qs(request.user), id=list_id)
+
     items = shoppinglist.items.all()
 
     if request.method == "POST":
@@ -85,7 +88,7 @@ def add_item(request, list_id):
             item = form.save(commit=False)
             item.shopping_list = shoppinglist
             item.save()
-            return redirect("shoppinglist-detail", list_id=shoppinglist.id)
+            return redirect(shoppinglist)
     else:
         form = AddItemForm()
     return render(
@@ -95,17 +98,33 @@ def add_item(request, list_id):
     )
 
 
+def lists_user_can_view_qs(user, include_archived: bool = False):
+    qs = (
+        ShoppingList.objects.filter(Q(author=user) | Q(shared_with=user))
+        .distinct()
+        .select_related("author")
+    )  # you’ll display author
+    if not include_archived:
+        qs = qs.filter(is_archived=False)
+    return qs.order_by("-created_at")
+
+
 @login_required
 def edit_item(request, item_id):
-
-    item = Item.objects.get(id=item_id)
+    item = get_object_or_404(
+        Item.objects.select_related("shopping_list").filter(
+            Q(shopping_list__author=request.user)
+            | Q(shopping_list__shared_with=request.user)
+        ),
+        id=item_id,
+    )
 
     if request.method == "POST":
         form = EditItemForm(request.POST, instance=item)
 
         if form.is_valid():
             form.save()
-            return redirect("shoppinglist-detail", item.shopping_list.id)
+            return redirect(item.shopping_list)
     else:
         form = EditItemForm(instance=item)
 

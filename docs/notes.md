@@ -1,67 +1,99 @@
-5/31:
+# Shopping List App — Decisions Log
 
-🗓️ 8-Week Plan (Assumes ~6–12 hrs/week)
-Week	Goal
-1	Finalize core Django functionality (CRUD lists/items, auth, views)
-2	Add filtering, duplicate prevention, item status toggling
-3	Learn Django REST Framework basics: serializers, viewsets
-4	Convert shopping list views to API endpoints
-5	Build a separate React app that fetches lists from /api/lists/
-6	Add basic React form to create lists via POST
-7	Add login + logout (either in React or just show protected behavior)
-8	Polish, deploy frontend (optional), add README + demo GIF
+*A compact, living log of choices. Each section ends with an **Interview hook** you can say out loud. Use the checkboxes to track completion.*
 
-✅ Step-by-Step Path to “REST Level” with Django
-📦 1. Solidify Django Core (You're already 70%+ there)
-Make sure you're comfortable with:
+---
 
-✅ Models
+## 0) TL;DR (Current Direction)
 
-✅ Views
+* [x] **Salvage** the current project (no restart) ✅
+* [x] Keep models; switch to `AUTH_USER_MODEL`; add `blank=True` on `shared_with` ✅
+* [ ] Add centralized object-level authorization (helper + DRF permission)
+* [ ] Ship minimal DRF endpoints under `/api/` with safe `get_queryset()`
+* [ ] Add 4 auth tests (owner/shared/stranger/share-action)
 
-✅ Templates
+**Interview hook:** “I audited for IDOR and added object-level authorization; serializers and viewsets mirror UI rules.”
 
-✅ URL routing
+---
 
-✅ User auth (login_required, request.user)
+## 1) Domain Model
 
-✅ Pushing to GitHub, deploying (you’ve done all of this!)
+**Decision:**
 
-Goal: Understand how Django serves HTML pages and handles user state.
+* `ShoppingList(author, name, created_at, shared_with<M2M>)`
+* `Item(shopping_list→ShoppingList, name, status∈{need, will_buy, bought})`
+* Use `related_name="items"` on `Item.shopping_list`.
+* Use `settings.AUTH_USER_MODEL` for `author` & `shared_with`.
+* `shared_with`: `blank=True` to simplify forms.
 
-2. Understand What REST Is
+**Rationale:** Minimal, readable schema; maps 1\:many (list→items) and many\:many (list↔users) cleanly.
 
-🛠️ 3. Learn Django REST Framework (DRF) Core Tools
-Concept	What to Learn
-✅ Serializers	Convert model instances ↔ JSON
-✅ API Views	Class-based views (like APIView, ModelViewSet)
-✅ Routers	DRF's auto-URL generator for viewsets
-✅ Permissions	Enforce access rules (IsAuthenticated, etc.)
-✅ Browsable API UI	DRF's built-in dev tool for exploring endpoints 🔥
+**Tiny snippet (≤5 lines):**
 
-5/25:
+```py
+from django.conf import settings
 
-🧱 When you’re ready to improve it...
-Here’s a natural checklist of incremental improvements you can tackle next:
+author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+shared_with = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='shared_lists', blank=True)
+```
 
-Feature	Skill it teaches
-✅ Prevent adding duplicate items	Validation logic in forms.py
-🧠 Edit an item’s name/status	More advanced form prepopulation
-🎨 Add some CSS	Learn basic static file setup
-🗑️ Delete items	Build your first POST-only action
-✅ Mark status as "Bought" via toggle	Learn how to update DB state from a button
-🔐 Require login to create lists/items	Learn Django auth decorators
-🔍 Filter items by status (Need vs Bought)	Learn query filters and GET params
+**Interview hook:** “I kept the schema intentionally small and user-swappable via `AUTH_USER_MODEL` for portability.”
 
-maybe add a logout to Your Shopping Lists
+---
 
-5/24:
-next items
-    - Display items in a given shopping list
-    - add a form to create an item in a list
-    - filter lists by user
+## 2) S
 
 
 
-FUTURE:
-- add slugify url logic
+
+
+prompt:
+8/18
+
+Context to load:
+
+Project: shoppinglist_project (server-rendered UI), we’re layering DRF into THIS project; shoppinglist_api is archived.
+
+Current state:
+
+Working pages: index → detail → add/edit item.
+
+Object-level auth in views (author or shared_with).
+
+lists/urls.py namespaced with app_name="lists".
+
+Project urls.py mounts lists/ and auth routes; root redirect OK.
+
+Models: ShoppingList(author, name, created_at, is_archived, shared_with[blank=True]); Item(shopping_list, name, status).
+
+Migrations applied; basic templates render.
+
+Goal for this session: Add DRF endpoints under /api/ with flat routes (no nested routers). Keep code minimal; reuse existing authorization rules.
+
+How I want help:
+
+Don’t spoon-feed big blocks. Give me 1–5 line fixes and short implementation checklists.
+
+If a change is >5 lines, outline a brief plan and the exact files to touch.
+
+Tie guidance to interview talking points (object-level auth, DRF viewsets, queryset design, n+1 avoidance).
+
+Tasks to guide me through now:
+
+Create lists/serializers.py for ShoppingList and Item (fields consistent with my models; author read-only; nested items read-only).
+
+Create lists/api_permissions.py with IsOwnerOrShared (object-level: list owner or in shared_with; for items, check item.shopping_list).
+
+Create lists/api.py with ShoppingListViewSet and ItemViewSet:
+
+get_queryset() mirrors my visibility rule;
+
+perform_create() sets author and validates shopping_list access before saving an item.
+
+Wire DRF router in project urls.py at /api/ and verify /api/ → /api/shoppinglists/ works.
+
+Write one pytest for each: owner OK, shared OK, stranger 403.
+
+Add a notes.md entry summarizing the API surface + auth story.
+
+Files I’ll paste if you ask: current models.py, urls.py, any serializers I draft, and failing test output.

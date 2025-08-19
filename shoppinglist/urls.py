@@ -17,15 +17,33 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import include, path
-from lists import views
-from django.shortcuts import redirect
+from django.views.generic import RedirectView
 from django.contrib.auth import views as auth_views
 
+from rest_framework.routers import DefaultRouter
+from lists.api import ShoppingListViewSet, ItemViewSet  # ← you'll need lists/api.py
+from lists import views as list_views
+
+# DRF router
+router = DefaultRouter()
+router.register("shoppinglists", ShoppingListViewSet, basename="shoppinglist")
+router.register("items", ItemViewSet, basename="item")
+
 urlpatterns = [
-    path("", lambda request: redirect("login/", permanent=False)),
+    # Root: redirect to your list index (cleaner than hardcoding "/login/")
+    # NOTE: requires app_name="lists" in lists/urls.py and a route named "shoppinglist-index"
+    path(
+        "",
+        RedirectView.as_view(pattern_name="lists:shoppinglist-index", permanent=False),
+        name="root",
+    ),
     path("admin/", admin.site.urls),
-    path("lists/", include("lists.urls")),  # need to figure out what this line does
-    path("signup/", views.signup_view, name="signup"),
-    path("login/", views.login_view, name="login"),
-    path("logout/", auth_views.LogoutView.as_view(next_page="/login/"), name="logout"),
+    # Mount your HTML app
+    path("lists/", include("lists.urls")),
+    # Auth (keep your custom views or swap to Django's later)
+    path("signup/", list_views.signup_view, name="signup"),
+    path("login/", list_views.login_view, name="login"),
+    path("logout/", auth_views.LogoutView.as_view(next_page="login"), name="logout"),
+    # DRF API
+    path("api/", include(router.urls)),
 ]

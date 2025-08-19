@@ -1,26 +1,17 @@
-<h1> Add item to {{shoppinglist.name}}</h1>
-
-
-
-
+<h1>Add item to {{ shoppinglist.name }}</h1>
 
 <form method="POST">
     {% csrf_token %}
-    {{form.as_p}}
+    {{ form.as_p }}
     <button type="submit">Add Item</button>
-    <a href="{% url 'shoppinglist-detail' shoppinglist.id%}"><button type="button">Cancel</button></a>
+    <a href="{% url 'lists:shoppinglist-detail' list_id=shoppinglist.id %}">Cancel</a>
 </form>
 
-
-<body>
-    <h3>Items already in {{shoppinglist.name}}</h3>
-    <ul>
-        {% for item in items %}
-        <li>{{item.name}} -- {{ item.get_status_display }}</li>
-
-
-        {% empty %}
-        <li>No items currently in this list.</li>
-    </ul>
+<h3>Items already in {{ shoppinglist.name }}</h3>
+<ul>
+    {% for item in items %}
+    <li>{{ item.name }} — {{ item.get_status_display }}</li>
+    {% empty %}
+    <li>No items currently in this list.</li>
     {% endfor %}
-</body>
+</ul>
