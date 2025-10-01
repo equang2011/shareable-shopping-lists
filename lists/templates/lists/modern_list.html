@@ -1,0 +1,28 @@
+<div class="modern-grid">
+    {% for sl in lists %}
+    <div class="card">
+        <h3>{{ sl.name }}</h3>
+        <p>Owner: {{ sl.author }}</p>
+        <a href="{{ sl.get_absolute_url }}">Open List</a>
+    </div>
+    {% empty %}
+    <p>No lists yet. <a href="{% url 'lists:create-list' %}">Create one</a>.</p>
+    {% endfor %}
+</div>
+
+<style>
+    .modern-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 1rem;
+        background: #fafafa;
+        box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.1);
+    }
+</style>

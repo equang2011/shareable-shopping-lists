@@ -1,36 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+    <meta charset="utf-8" />
     <title>Login</title>
 </head>
 
 <body>
     <h1>Login</h1>
 
+    {# Show errors accessibly #}
     {% if error %}
-    <p style="color:red;"> {{ error}}></p>
+    <p style="color:red;" aria-live="polite">{{ error }}</p>
     {% endif %}
 
-
-    <form method="POST">
+    {# Preserve ?next=/lists/ through the POST #}
+    {% with next=request.GET.next %}
+    <form method="post" action="{% url 'login' %}{% if next %}?next={{ next|urlencode }}{% endif %}">
         {% csrf_token %}
 
-        <label for="username">Username:</label>
-        <input type="text" name="username" id="username" required>
+        {% if next %}
+        <input type="hidden" name="next" value="{{ next }}">
+        {% endif %}
+
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" required autocomplete="username" autofocus>
 
         <br>
-        <label for="password">Password:</label>
-        <input type="password" name="password" id="password" required>
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" required autocomplete="current-password">
 
         <br><br>
 
         <button type="submit">Log in</button>
-
     </form>
+    {% endwith %}
 
-    <p>Don't have an account? <a href="{% url 'signup' %}"> Sign up</a></p>
-
+    <p>Don’t have an account? <a href="{% url 'signup' %}">Sign up</a></p>
 </body>
 
 </html>

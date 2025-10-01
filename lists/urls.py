@@ -2,7 +2,7 @@
 from django.urls import path
 from . import views
 
-app_name = "lists"
+app_name = "lists"  # <-- this creates namespace
 
 urlpatterns = [
     path("", views.index, name="shoppinglist-index"),  # /lists/
@@ -12,4 +12,5 @@ urlpatterns = [
     path(
         "items/<int:item_id>/edit/", views.edit_item, name="edit-item"
     ),  # /lists/items/123/edit/
+    path("modern/", views.shoppinglist_modern, name="shoppinglist-modern"),
 ]

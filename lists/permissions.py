@@ -1,5 +1,6 @@
 from django.db.models import Q
 from .models import ShoppingList
+from rest_framework import permissions
 
 
 def get_lists_user_can_view(user, include_archived: bool = False):
@@ -18,3 +19,12 @@ def user_can_access_list(user, shoppinglist):
         shoppinglist.author_id == user.id
         or shoppinglist.shared_with.filter(id=user.id).exists()
     )
+
+
+class IsOwnerOrShared(permissions.BasePermission):
+    """
+    Custom permission: Only allow access to list authors or shared users.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        return user_can_access_list(request.user, obj)

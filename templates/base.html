@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Shopping App{% endblock %}</title>
+</head>
+
+<body>
+    <header>
+
+        <nav>
+            <a href="{% url 'lists:shoppinglist-index' %}">Lists</a> |
+            <a href="{% url 'logout' %}">Logout</a>
+        </nav>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+
+</html>
+
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>

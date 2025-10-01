@@ -1,13 +1,21 @@
-from django.conf import settings
 from django.contrib.auth import authenticate, login
 from django.db.models import Q
 from django.shortcuts import render, get_object_or_404, redirect
-
-from .models import ShoppingList, Item
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
+from .models import ShoppingList, Item, ListInvite
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
-from .permissions import get_lists_user_can_view, user_can_access_list
+from .permissions import get_lists_user_can_view
 from .forms import CreateListForm, AddItemForm, EditItemForm
+from .serializers import ShoppingListSerializer, ItemSerializer, InviteSerializer
+from .services import archive_list, update_item
+from rest_framework import viewsets, permissions
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from django.core.exceptions import PermissionDenied
+from django.contrib.auth.models import User
+from django.http import HttpResponse
 
 
 def login_view(request):
@@ -18,9 +26,14 @@ def login_view(request):
 
         if user is not None:
             login(request, user)
-            return redirect(
-                "shoppinglist-index"
-            )  # redirect to index. how does redirect work
+            next_url = request.POST.get("next") or request.GET.get("next") or ""
+            is_safe = url_has_allowed_host_and_scheme(
+                url=next_url,
+                allowed_hosts={request.get_host()},
+                require_https=request.is_secure(),
+            )
+            default_url = reverse("lists:shoppinglist-index")
+            return redirect(next_url if is_safe and next_url else default_url)
         else:
             return render(
                 request,
@@ -36,7 +49,7 @@ def signup_view(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect("shoppinglist-index")  # send them to lists
+            return redirect("lists:shoppinglist-index")  # send them to lists
     else:
         form = UserCreationForm()
     return render(request, "registration/signup.html", {"form": form})
@@ -45,7 +58,15 @@ def signup_view(request):
 @login_required
 def index(request):
     lists = get_lists_user_can_view(request.user)
+    print("DEBUG lists:", lists)
     return render(request, "lists/index.html", {"lists": lists})
+
+
+@login_required
+def shoppinglist_modern(request):
+    """Return a modernized version of the list (HTMX partial)."""
+    lists = get_lists_user_can_view(request.user)
+    return render(request, "lists/modern_list.html", {"lists": lists})
 
 
 @login_required
@@ -58,7 +79,7 @@ def create_list(request):
             shoppinglist = form.save(commit=False)
             shoppinglist.author = request.user
             shoppinglist.save()
-            return redirect("shoppinglist-index")
+            return redirect("lists:shoppinglist-index")
 
     else:
         form = CreateListForm()
@@ -68,7 +89,7 @@ def create_list(request):
 
 @login_required
 def item_view(request, list_id):
-    shoppinglist = get_object_or_404(lists_user_can_view_qs(request.user), id=list_id)
+    shoppinglist = get_object_or_404(get_lists_user_can_view(request.user), id=list_id)
 
     items = shoppinglist.items.all()
     return render(
@@ -78,7 +99,7 @@ def item_view(request, list_id):
 
 @login_required
 def add_item(request, list_id):
-    shoppinglist = get_object_or_404(lists_user_can_view_qs(request.user), id=list_id)
+    shoppinglist = get_object_or_404(get_lists_user_can_view(request.user), id=list_id)
 
     items = shoppinglist.items.all()
 
@@ -96,17 +117,6 @@ def add_item(request, list_id):
         "lists/add_item.html",
         {"form": form, "shoppinglist": shoppinglist, "items": items},
     )
-
-
-def lists_user_can_view_qs(user, include_archived: bool = False):
-    qs = (
-        ShoppingList.objects.filter(Q(author=user) | Q(shared_with=user))
-        .distinct()
-        .select_related("author")
-    )  # you’ll display author
-    if not include_archived:
-        qs = qs.filter(is_archived=False)
-    return qs.order_by("-created_at")
 
 
 @login_required

@@ -1,10 +1,9 @@
-<h1> Edit item in {{shoppinglist.name}}</h1>
+<h1>Edit item in {{ shoppinglist.name }}</h1>
 
-
-<form action="{% url 'edit-item' item.id %}" method="POST">
+<form action="{% url 'lists:edit-item' item.id %}" method="POST">
     {% csrf_token %}
     {{ form.as_p }}
     <input type="submit" value="Submit ✅" />
-
-    <a href="{% url 'shoppinglist-detail' shoppinglist.id%}"><button type="button">Cancel ❌</button></a>
+    &nbsp;
+    <a href="{% url 'lists:shoppinglist-detail' list_id=shoppinglist.id %}">Cancel ❌</a>
 </form>

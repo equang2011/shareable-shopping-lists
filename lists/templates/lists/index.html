@@ -1,33 +1,21 @@
-<!DOCTYPE html>
-<html>
+{% extends "base.html" %}
 
-<head>
-    <title>Shopping Lists</title>
-</head>
+{% block title %}Your Shopping Lists{% endblock %}
 
-<body>
-    <h1>Your Shopping Lists</h1>
+{% block content %}
+<h2>Your Shopping Lists</h2>
+<div id="list-container">
     <ul>
-        {% for list in lists %}
-        <li>
-            <a href="{% url 'shoppinglist-detail' list.id %}">
-                {{ list.name }} ({{ list.author.username }})
-            </a>
-        </li>
+        {% for sl in lists %}
+        <li><a href="{{ sl.get_absolute_url }}">{{ sl.name }}</a> ({{ sl.author }})</li>
         {% empty %}
-        <li>No shopping lists yet.</li>
-
-
+        <li>No lists yet. <a href="{% url 'lists:create-list' %}">Create one</a>.</li>
         {% endfor %}
     </ul>
-    <div style="margin-top: 1em;">
-        <a href="{% url 'create-list' %}">+ Create a new list</a>
-    </div>
+</div>
 
-    {% if user.is_authenticated %}
-    <p><a href="{% url 'logout' %}">Logout</a></p>
-    {% endif %}
 
-</body>
-
-</html>
+<button hx-get="{% url 'lists:shoppinglist-modern' %}" hx-target="#list-container" hx-swap="innerHTML">
+    Toggle Modern View
+</button>
+{% endblock %}
