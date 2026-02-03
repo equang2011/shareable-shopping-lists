@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<h2>Invite to: {{ invite.shopping_list.name }}</h2>
+<p>Sent by: <strong>{{ invite.inviter.username }}</strong></p>
+<p>Status: {{ invite.status }} </p>
+
+<p>Do you want to accept this invite?</p>
+
+<form method="post" action="{% url 'lists:accept-invite' invite.id %}" style="display:inline;">
+    {% csrf_token %}
+    <button type="submit">Accept ✅</button>
+</form>
+
+<form method="post" action="{% url 'lists:decline-invite' invite.id %}" style="display:inline;">
+    {% csrf_token %}
+    <button type="submit">Decline ❌</button>
+</form>
+
+
+
+
+<a href="{% url 'lists:invites-dashboard' %}">← Back to your invites →</a>
+{% endblock %}

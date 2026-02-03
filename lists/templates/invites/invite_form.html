@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Send Invite 🤝 to {{ shopping_list.name }}</h2>
+
+<!-- search field -->
+<input type="text" name="q" placeholder="Search users..." hx-get="{% url 'lists:search-users' %}"
+    hx-target="#invite-results" hx-trigger="keyup changed delay:300ms">
+
+<!-- Where search results appear -->
+<div id="invite-results"></div>
+
+{% if messages %}
+<ul>
+    {% for m in messages %}
+    <li>{{ m }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+<!-- Invite form -->
+<form method="post">
+    {% csrf_token %}
+    <div id="invitee-display-wrapper">
+        <p>No invitee selected.</p>
+    </div>
+
+
+    <button type="submit">Send Invite</button>
+</form>
+
+<a href="{% url 'lists:shoppinglist-detail' shopping_list.id %}">Back to list</a>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<h2>Invite someone to {{ shoppinglist.name }}</h2>
+
+<input type="text" name="q" placeholder="Search users..." hx-get="{% url 'lists:search-users' %}"
+    hx-target="#invite-results" hx-trigger="keyup changed delay:300ms">
+
+<div id="invite-results"></div>
+{% endblock %}

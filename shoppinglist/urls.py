@@ -21,13 +21,14 @@ from django.views.generic import RedirectView
 from django.contrib.auth import views as auth_views
 
 from rest_framework.routers import DefaultRouter
-from lists.api import ShoppingListViewSet, ItemViewSet  # ← you'll need lists/api.py
+from lists.api import ShoppingListViewSet, ItemViewSet, InviteViewSet
 from lists import views as list_views
 
 # DRF router
 router = DefaultRouter()
 router.register("shoppinglists", ShoppingListViewSet, basename="shoppinglist")
 router.register("items", ItemViewSet, basename="item")
+router.register("invites", InviteViewSet, basename ="invite")
 
 urlpatterns = [
     # Root: redirect to your list index (cleaner than hardcoding "/login/")

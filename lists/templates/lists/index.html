@@ -14,8 +14,13 @@
     </ul>
 </div>
 
+<p>
+    <a href="{% url 'lists:create-list' %}">➕ Create New List</a>
+</p>
 
-<button hx-get="{% url 'lists:shoppinglist-modern' %}" hx-target="#list-container" hx-swap="innerHTML">
-    Toggle Modern View
-</button>
+<p>
+    <button hx-get="{% url 'lists:shoppinglist-modern' %}" hx-target="#list-container" hx-swap="innerHTML">
+        Modern View
+    </button>
+</p>
 {% endblock %}

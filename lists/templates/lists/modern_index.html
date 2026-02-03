@@ -1,3 +1,8 @@
+<button hx-get="{% url 'lists:shoppinglist-index' %}" hx-target="#list-container" hx-swap="innerHTML"
+    style="margin-bottom: 1rem;">
+    Classic View
+</button>
+
 <div class="modern-grid">
     {% for sl in lists %}
     <div class="card">

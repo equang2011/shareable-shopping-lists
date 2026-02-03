@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Your Invites{% endblock %}
+
+{% block content %}
+
+
+
+<div class="invites-dashboard">
+    <h2>Your Invites</h2>
+
+    <h3>Incoming</h3>
+    <ul>
+        {% for inv in incoming %}
+        <li>{{inv.shopping_list.name}} from {{inv.inviter.username}} — {{ inv.status}}
+            <a href="{% url 'lists:invite-detail' inv.id %}">View</a>
+            {% if inv.status == "pending" %}
+
+            <form method="post" action="{% url 'lists:accept-invite' inv.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">Accept ✅</button>
+            </form>
+            {% endif %}
+        </li>
+        {% empty %}
+        <li> No incoming invites.</li>
+        {% endfor %}
+    </ul>
+
+
+    <h3>Outgoing</h3>
+
+    <ul>
+        {% for inv in outgoing %}
+        <li>{{inv.shopping_list.name}} to {{inv.invitee.username}} {{inv.status}}
+
+            <a href="{% url 'lists:invite-detail' inv.id %}">View</a>
+
+            <!-- Cancel button (only if pending) -->
+            {% if inv.status == "pending" %}
+            <form method="post" action="{% url 'lists:cancel-invite' inv.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">Cancel ❌</button>
+            </form>
+            {% endif %}
+        </li>
+        {% empty %}
+        <li>No outgoing invites</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<a href="{% url 'lists:shoppinglist-index' %}">← Back to Lists</a>
+{% endblock %}

@@ -1,0 +1,14 @@
+<button hx-get="{% url 'lists:shoppinglist-modern' %}" hx-target="#list-container" hx-swap="innerHTML">
+    Modern View
+</button>
+
+<ul>
+    {% for sl in lists %}
+    <li>
+        <a href="{{ sl.get_absolute_url }}">{{ sl.name }}</a>
+        ({{ sl.author }})
+    </li>
+    {% empty %}
+    <li>No shopping lists yet.</li>
+    {% endfor %}
+</ul>

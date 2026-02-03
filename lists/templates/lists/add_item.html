@@ -4,6 +4,7 @@
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit">Add Item</button>
+    <button type="submit" name="action" value="add_another">Add Another item</button>
     <a href="{% url 'lists:shoppinglist-detail' list_id=shoppinglist.id %}">Cancel</a>
 </form>
 

@@ -1,11 +1,16 @@
 from django.db import models
+from django.db.models.functions import Lower
 from django.conf import settings
 from django.urls import reverse
 
 
 # Create your models here.
 class ShoppingList(models.Model):
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="owned_lists",
+    )
     name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     shared_with = models.ManyToManyField(
@@ -34,6 +39,15 @@ class Item(models.Model):
         related_name="items_added",
     )
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                Lower("name"),
+                "shopping_list",
+                name="unique_item_name_per_list_case_insensitive",
+            )
+        ]
+
     def __str__(self):
         return self.name
 
@@ -56,7 +70,7 @@ class ListInvite(models.Model):
     STATUS_CHOICES = [
         ("pending", "Pending"),
         ("accepted", "Accepted"),
-        ("cancelled", "Cancelled"),
+        ("canceled", "Canceled"),
         ("declined", "Declined"),
     ]
     status = models.CharField(max_length=12, choices=STATUS_CHOICES, default="pending")

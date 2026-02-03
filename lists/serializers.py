@@ -4,9 +4,14 @@ from .models import ShoppingList, Item, ListInvite
 
 
 class ItemSerializer(serializers.ModelSerializer):
+    shopping_list = serializers.PrimaryKeyRelatedField(
+        queryset=ShoppingList.objects.all(),
+        write_only=True,
+    )
+
     class Meta:
         model = Item
-        fields = ["id", "name", "status", "shopping_list", "added_by"]
+        fields = ["id", "name", "status", "added_by"]
         read_only_fields = ["id", "added_by"]
 
     def create(self, validated_data):
@@ -27,10 +32,9 @@ class ShoppingListSerializer(serializers.ModelSerializer):
             "name",
             "author",
             "created_at",
-            "shared_with",
             "items",
         ]
-        read_only_fields = ["author", "created_at", "is_archived"]
+        read_only_fields = ["author", "created_at", "shared_with"]
 
     def create(self, validated_data):
         request = self.context.get("request")

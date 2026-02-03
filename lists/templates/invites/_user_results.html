@@ -1,0 +1,17 @@
+<ul>
+    {% for user in results %}
+    <li>
+        {{ user.first_name }} {{ user.last_name }}
+
+        <form hx-post="{% url 'lists:select-invitee' %}" hx-target="#invitee-display-wrapper" hx-swap="outerHTML"
+            style="display:inline;">
+
+            {% csrf_token %}
+            <input type="hidden" name="user_id" value="{{ user.id }}">
+            <button type="submit">Select</button>
+        </form>
+    </li>
+    {% empty %}
+    <li>No users found.</li>
+    {% endfor %}
+</ul>

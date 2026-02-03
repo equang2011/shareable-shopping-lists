@@ -18,28 +18,14 @@ What do we need services for?
 from django.db import transaction, IntegrityError
 from django.utils import timezone
 from django.core.exceptions import ValidationError, PermissionDenied
+from django.shortcuts import get_object_or_404
 from .models import ListInvite, Item
+from django.db.models import Q
 
 
 # Optional: define domain-specific exceptions in lists/exceptions.py and import them here
 # class DuplicatePendingInvite(Exception): ...
 # class InvalidInviteTransition(Exception): ...
-
-
-def archive_list(shopping_list, user):
-    """
-    Only owner of shopping list can archive
-    Shopping list cannot already be archived
-    """
-    if user != shopping_list.author:
-        raise PermissionDenied("Only the owner of this list can archive it.")
-    if shopping_list.is_archived:
-        raise ValidationError("This Shopping List is not active.")
-
-    shopping_list.is_archived = True
-    shopping_list.save()
-
-    return shopping_list
 
 
 def send_invite(shopping_list, inviter, invitee):
@@ -75,6 +61,10 @@ def send_invite(shopping_list, inviter, invitee):
         raise ValidationError("Cannot invite yourself or an existing collaborator")
     if shopping_list.shared_with.filter(id=invitee.id).exists():
         raise ValidationError("This user is already invited to this list.")
+    if shopping_list.shared_with.count() >= 49:
+        raise ValidationError(
+            "This shopping list is full. You cannot send this invite."
+        )
 
     if ListInvite.objects.filter(
         shopping_list=shopping_list, invitee=invitee, status="pending"
@@ -87,7 +77,7 @@ def send_invite(shopping_list, inviter, invitee):
         inviter=inviter,
         invitee=invitee,
         status="pending",
-        sent_at=timezone.now(),
+        created_at=timezone.now(),
     )
     return invite
 
@@ -98,7 +88,7 @@ def accept_invite(invite, actor):
 
     Preconditions:
     - invite.status == 'pending'
-    - actor == invite.sent_to
+    - actor == invite.invitee
     - invite.shopping_list.is_archived is False
 
     Side effects (atomic):
@@ -117,12 +107,17 @@ def accept_invite(invite, actor):
         raise ValidationError("This invite cannot be accepted.")
 
     sl = invite.shopping_list
+
     if sl.is_archived:
         raise ValidationError(
             "This invite cannot be accepted because the shopping list is archived."
         )
     if sl.shared_with.filter(id=actor.id).exists():
         raise ValidationError("You have already been added to this list.")
+    if sl.shared_with.count() >= 49:
+        raise ValidationError(
+            "This shopping list is full. You cannot accept this invite."
+        )
 
     with transaction.atomic():
         sl.shared_with.add(actor)
@@ -171,7 +166,7 @@ def cancel_invite(invite, actor):
     - actor == invite.shopping_list.author
 
     Side effects:
-    - Sets invite.status='cancelled'
+    - Sets invite.status='canceled'
 
     Raises:
     - PermissionDenied if actor is not the list author
@@ -183,7 +178,7 @@ def cancel_invite(invite, actor):
         raise ValidationError("This invite cannot be cancelled.")
 
     with transaction.atomic():
-        invite.status = "cancelled"
+        invite.status = "canceled"
         invite.save(update_fields=["status"])
 
     return invite
@@ -195,9 +190,9 @@ def archive_list(shopping_list, actor):
     BusinessLogic: allows List Owner to archive list
     """
     if actor != shopping_list.author:
-        raise PermissionDenied("You cannot archive this list.")
+        raise PermissionDenied("Only the owner of this list can archive it.")
     if shopping_list.is_archived:
-        raise ValidationError("This Shopping List is already archived.")
+        raise ValidationError("This Shopping List is not active.")
 
     with transaction.atomic():
         shopping_list.is_archived = True
@@ -209,34 +204,40 @@ def archive_list(shopping_list, actor):
 # ------ item services ------
 
 
-def add_item(shopping_list, name, actor):
+def add_item(shopping_list, actor, name):
     """
     allows actor to add item to shopping list
     - list must be active
     - item cannot already be on list
     """
+    # Permission check
     if (
         actor != shopping_list.author
         and not shopping_list.shared_with.filter(id=actor.id).exists()
     ):
         raise PermissionDenied("You are not allowed to add items to this list.")
+    # List must be active
     if shopping_list.is_archived:
         raise ValidationError("This Shopping List is not active.")
-
+    # No duplicates
     if shopping_list.items.filter(name__iexact=name).exists():
         raise ValidationError("This item has already been added to the Shopping List.")
 
+    # max item count
+    if shopping_list.items.count() > 99:
+        raise ValidationError("List cannot have more than 99 items.")
     with transaction.atomic():
         new_item = Item.objects.create(
             shopping_list=shopping_list,
             name=name,
             status="need",
+            added_by=actor,
         )
 
     return new_item
 
 
-def update_item(actor, item, **changes):
+def update_item(item, actor, **changes):
     """ """
     if (
         actor != item.shopping_list.author
@@ -244,15 +245,45 @@ def update_item(actor, item, **changes):
     ):
         raise PermissionDenied("You cannot update this item.")
 
+    changed_fields = []
     if "status" in changes:
         item.status = changes["status"]
+        changed_fields.append("status")
     if "name" in changes:
         if actor != item.added_by:
             raise PermissionDenied("Only the author can rename this item.")
         item.name = changes["name"]
-
-    item.save()
+        changed_fields.append("name")
+    if not changed_fields:
+        return item
+    with transaction.atomic():
+        item.save(update_fields=changed_fields)
     return item
+
+
+def delete_item(actor, item):
+    """
+    Delete an item from a shopping list.
+    Preconditions:
+    - actor == item.added_by or ==list.author
+    - list not archived
+    """
+    if actor != item.added_by and actor != item.shopping_list.author:
+        raise PermissionDenied("You cannot delete this item.")
+    if item.shopping_list.is_archived:
+        raise ValidationError("Cannot delete items from an archived list.")
+    item.delete()
+    return
+
+
+def get_item_user_can_edit(user, item_id):
+    """Return item user is allowed to edit or return 404"""
+    return get_object_or_404(
+        Item.objects.select_related("shopping_list").filter(
+            Q(shopping_list__author=user) | Q(shopping_list__shared_with=user)
+        ),
+        id=item_id,
+    )
 
 
 """
