@@ -1,11 +1,11 @@
 # Shareable Shopping Lists - MVP v0.1
 
-Share simple shopping lists with friends. Prevent duplicate items (case-insensitive), invite collaborators via token links, and mark items 'need'/'bought'.
+Share simple shopping lists with friends. Prevent duplicate items (case-insensitive) and invite collaborators to shared lists, with item status tracking ('need'/'bought').
 
 ## Stack
 - Python 3.x • Django • Django REST Framework
-- Postgres (recommended for case-insensitive unique constraint)
-- Deployed on Render
+- SQLite (local dev); Postgres-compatible for production
+- Deployment-ready (Render)
 
 ## Quickstart
 ```bash
@@ -18,7 +18,7 @@ python manage.py runserver
 
 ## Features
 - Create shopping lists
-- Invite collaborators via shareable token links
+- Invite collaborators to shared lists
 - Prevent duplicate items (case-insensitive check)
 - Mark items as "need", "bought" or "will buy"
 - Permission rules: only author or collaborators can add items
